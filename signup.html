@@ -1,0 +1,202 @@
+{% extends "page.html" %}
+{% block nav_bar %}{% endblock nav_bar %}
+
+{% block script %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let button = document.getElementById('eye');
+    button.addEventListener("click", function(e) {
+      let pwd = document.getElementById("password_input");
+      let pwdc = document.getElementById("password_confirmation_input");
+      if (pwd.getAttribute("type") === "password") {
+        pwd.setAttribute("type", "text");
+        pwdc.setAttribute("type", "text");
+        button.textContent = "🔑";
+      } else {
+        pwd.setAttribute("type", "password");
+        pwdc.setAttribute("type", "password");
+        button.textContent = "👁";
+      }
+    });
+  });
+
+  {% if tos %}
+  document.addEventListener('DOMContentLoaded', function() {
+    let checkbox = document.getElementById('tos_check');
+    checkbox.addEventListener("click", function(e) {
+      let submit_button = document.getElementById("signup_submit");
+      submit_button.disabled = ! checkbox.checked;
+    });
+  });
+  {% endif %}
+
+  if (window.location.protocol === "http:") {
+    let warning = document.getElementById('insecure-login-warning');
+    if (warning) warning.className = warning.className.replace(/\bhidden\b/, '');
+  }
+</script>
+
+{% if recaptcha_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
+{% endblock script %}
+
+{% block main %}
+{% block login %}
+
+<style>
+  :root {
+    --brand-color: #7F56D9;
+    --text-primary: white;
+    --text-secondary: #667085;
+    --gray-light: #EAECF0;
+    --gray-medium: #D0D5DD;
+    --background-color: #242124;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-image: url("{{ static_url('bg2.png') }}");
+    background-size: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: var(--text-primary);
+  }
+
+  #login-main {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+  }
+
+  .login-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+
+  .login-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 8%;
+    box-sizing: border-box;
+  }
+
+  /* Shift form to start at 1/3 of screen */
+  .login-form-container {
+    max-width: 360px;
+    width: 100%;
+    margin-left: 33%;   
+    background: rgba(0, 0, 0, 0.6); /* makes form stand out */
+    padding: 24px;
+    border-radius: 12px;
+  }
+
+  .login-header { margin-bottom: 24px; }
+  .login-header h1 { font-size: 30px; font-weight: 600; margin: 0 0 8px 0; }
+  .login-header p { color: var(--text-secondary); font-size: 16px; margin: 0; }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 6px; }
+  .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--gray-medium); border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+  .form-control:focus { border-color: var(--brand-color); box-shadow: 0 0 0 4px #F4EBFF; outline: none; }
+
+  .btn-submit { width: 100%; padding: 10px 18px; border-radius: 8px; border: 1px solid #101828; background-color: #101828; color: white; font-size: 16px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+  .btn-submit:hover { background-color: #344054; }
+  .btn-submit:disabled { background-color: #D0D5DD; cursor: not-allowed; }
+
+  .alert { padding: 12px; margin-bottom: 16px; border-radius: 8px; font-size: 14px; text-align: center; }
+  .alert-warning { background-color: #FFFAEB; color: #B54708; }
+  .login_error { background-color: #FEF3F2; color: #B42318; }
+
+  .trouble-link { text-align: center; margin-top: 20px; }
+  .trouble-link a { color: var(--text-secondary); font-size: 14px; text-decoration: none; }
+</style>
+
+<div class="login-wrapper">
+  <div class="login-container">
+    <div class="login-form-container">
+      <div class="login-header">
+        <h1>Create Account</h1>
+        <p>Fill in the details to get started.</p>
+      </div>
+
+      <form action="{{post_url}}" method="post" role="form">
+        <input type="hidden" name="_xsrf" value="{{ xsrf }}"/>
+
+        <p id='insecure-login-warning' class='hidden alert alert-warning'>
+          Warning: JupyterHub is served over an unsecured connection.
+        </p>
+
+        {% if alert %}
+        <div class="alert {{alert}}" role="alert">
+          <p>{{result_message}}</p>
+          {% if two_factor_auth_user %}
+          <p><strong>Attention!</strong> 2FA enabled. Your code is <strong>{{ two_factor_auth_value }}</strong>.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="username_input">Username</label>
+          <input id="username_input" type="text" name="username" val="{{username}}" class="form-control" required />
+        </div>
+
+        {% if ask_email %}
+        <div class="form-group">
+          <label for="email_input">Email</label>
+          <input id="email_input" type="email" name="email" val="{{email}}" class="form-control" required />
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="password_input">Password</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input id="password_input" type="password" name="signup_password" class="form-control" />
+            <button id="eye" type="button" style="border:0;background:none;font-size:18px;cursor:pointer;">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password_confirmation_input">Confirm Password</label>
+          <input id="password_confirmation_input" type="password" name="signup_password_confirmation" class="form-control" />
+        </div>
+
+        {% if two_factor_auth %}
+        <div class="form-group">
+          <input type="checkbox" id="2fa" name="2fa" value="2fa"> Enable Two-Factor Authentication
+        </div>
+        {% endif %}
+
+        {% if tos %}
+        <div class="form-group">
+          <input type="checkbox" id="tos_check"> {{tos|safe}}
+        </div>
+        {% endif %}
+
+        {% if recaptcha_key %}
+        <div class="form-group">
+          <div class="g-recaptcha" data-sitekey="{{ recaptcha_key }}"></div>
+        </div>
+        {% endif %}
+
+        <input type="submit" id="signup_submit" class="btn-submit" value="Create Account" {% if tos %}disabled{% endif %} />
+
+        <div class="trouble-link">
+          <a href="{{ base_url }}login">Already have an account? Sign in</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock login %}
+{% endblock main %}
