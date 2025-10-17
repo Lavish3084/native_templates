@@ -1,260 +1,305 @@
 {% extends "page.html" %}
 {% block nav_bar %}{% endblock nav_bar %}
-
-{% if announcement_login is string %}
-  {% set announcement = announcement_login %}
-{% endif %}
-
-{% block login_widget %}{% endblock login_widget %}
+{% set show_login = show_login | default(True) %}
+{% set show_signup = show_signup | default(False) %}
 
 {% block main %}
-  {% block login %}
+<style>
+  :root {
+    --brand-color: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.7);
+    --background-color: #000000;
+  }
 
-    <style>
-      :root {
-        --brand-color: #7F56D9;
-        --text-primary: white;
-        --text-secondary: #667085;
-        --gray-light: #EAECF0;
-        --gray-medium: #D0D5DD;
-        --background-color: #242124;
-      }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Playfair Display', 'Georgia', serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    overflow: hidden;
+  }
 
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background-color: var(--background-color);
-        color: var(--text-primary);
-      }
+  .video-background-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: url('static/aispacebg.svg');
+    background-size: cover;
+    background-position: center;
+  }
 
-      #login-main {
-        display: flex;
-        min-height: 100vh;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        max-width: none;
-      }
-      
-      .login-wrapper {
-        display: flex;
-        width: 100%;
-        height: 100vh;
-        position: relative;
-      }
+  .gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+    z-index: 1;
+  }
 
-      .page-header-links {
-        position: absolute;
-        top: 30px;
-        left: 40px;
-        right: 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 10;
-      }
-      .page-header-links a {
-        text-decoration: none;
-        color: var(--text-secondary);
-        font-weight: 500;
-      }
-      .page-header-links .create-account {
-        padding: 8px 16px;
-        border: 1px solid var(--gray-light);
-        border-radius: 8px;
-        color: var(--text-primary);
-      }
-      .logo-link {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-      }
-      .logo-link img { height: 32px; }
+  .login-container-overlay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    width: 100vw;
+    gap: 60px;
+    padding: 0 60px;
+    box-sizing: border-box;
+    color: var(--text-primary);
+    transition: all 0.8s ease-in-out; 
+    margin-bottom: 500px;
+  }
 
-      .login-container {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 24px 8%;
-        box-sizing: border-box;
-      }
-      
-      .login-form-container {
-        max-width: 360px;
-        width: 100%;
-        margin: 0 auto;
-      }
-      
-      .login-header { margin-bottom: 24px; }
-      .login-header h1 { font-size: 30px; font-weight: 600; margin: 0 0 8px 0; }
-      .login-header p { color: var(--text-secondary); font-size: 16px; margin: 0; }
-      .service-login-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-      .btn-service { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 16px; border: 1px solid var(--gray-medium); border-radius: 8px; background-color: white; color: #344054; font-weight: 500; text-decoration: none; transition: background-color 0.2s; }
-      .btn-service:hover { background-color: #f9fafb; }
-      .btn-service img { width: 24px; height: 24px; }
-      .separator { display: flex; align-items: center; text-align: center; color: var(--text-secondary); margin: 24px 0; }
-      .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid var(--gray-light); }
-      .separator:not(:empty)::before { margin-right: .25em; }
-      .separator:not(:empty)::after { margin-left: .25em; }
-      .form-group { margin-bottom: 20px; }
-      .form-group label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 6px; }
-      .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--gray-medium); border-radius: 8px; box-sizing: border-box; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); font-size: 16px; }
-      .form-control:focus { border-color: var(--brand-color); box-shadow: 0 0 0 4px #F4EBFF; outline: none; }
-      .form-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-      .remember-me { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-      .remember-me input { width: 16px; height: 16px; }
-      .forgot-password { font-size: 14px; font-weight: 500; color: var(--brand-color); text-decoration: none; }
-      .btn-submit { width: 100%; padding: 10px 18px; border-radius: 8px; border: 1px solid #101828; background-color: #101828; color: white; font-size: 16px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
-      .btn-submit:hover { background-color: #344054; }
-      .btn-submit:disabled { background-color: #D0D5DD; cursor: not-allowed; }
+  .login-image-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.8s ease-in-out;
+  }
 
-      /* Carousel styles */
-      .login-art {
-        flex: 1;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .carousel {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
-      .carousel-image {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
-      }
-      .carousel-image.active {
-        opacity: 1;
-      }
+  .login-image-section img {
+    max-width: 60%;
+    max-height: 500px;
+    border-radius: 16px;
+    object-fit: cover;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
 
-      .alert { padding: 12px; margin-bottom: 16px; border-radius: 8px; font-size: 14px; text-align: center; }
-      .alert-warning { background-color: #FFFAEB; color: #B54708; }
-      .login_error { background-color: #FEF3F2; color: #B42318; }
+  .login-form-container {
+    flex: 0 0 400px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    padding: 40px 50px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 500px;
+    box-sizing: border-box;
+    transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+  }
 
-      .trouble-link { text-align: center; margin-top: 32px; }
-      .trouble-link a { color: var(--text-secondary); font-size: 14px; text-decoration: none; }
+  /* Flip forms */
+  .login-container-overlay.flipped .login-form-container {
+    transform: translateX(-250%);
+  }
+  .login-container-overlay.flipped .login-image-section {
+    transform: translateX(50%);
+  }
 
-      @media (max-width: 768px) {
-        .login-art { display: none; }
-        .login-container { justify-content: flex-start; padding-top: 120px; }
-      }
-    </style>
+  .login-header h1, .login-header p, label { color: #fff; }
+  .form-group { margin-bottom: 18px; }
+  .form-control {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    font-size: 15px;
+    background-color: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .form-control::placeholder { color: rgba(255,255,255,0.7); }
+  .form-control:focus {
+    border-color: var(--brand-color);
+    outline: none;
+    background-color: rgba(255,255,255,0.25);
+  }
 
-    <div class="login-wrapper">
+  .btn-submit {
+    width: 100%;
+    padding: 14px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--brand-color);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10%;
+  }
+  .btn-submit:hover { background-color: #222; }
 
-      <div class="page-header-links">
-        <a href="#" class="logo-link">
-          <img src="{{ static_url('logo.png') }}" alt="Logo" style="width: 191px; height: 65px;">
-        </a>           
+  .signup-link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .signup-link a { color: #fff; font-weight: 500; text-decoration: none; }
+  .signup-link a:hover { opacity: 0.8; }
+
+  .login_error {
+    background-color: rgba(255,0,0,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,0,0,0.5);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 16%;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .login-container-overlay {
+      flex-direction: column;
+      gap: 40px;
+      padding: 40px 20px;
+    }
+    .login-image-section img { max-width: 80%; max-height: 300px; }
+    .login-form-container { width: 100%; max-width: 400px; flex: none; transform: translateX(0) !important; }
+  }
+</style>
+
+<div class="video-background-fullscreen">
+  <div class="gradient-overlay"></div>
+</div>
+
+<div class="login-container-overlay">
+
+  <!-- Left image -->
+  <div class="login-image-section">
+    <img src="static/AI_Space_Logo_White.svg" alt="Illustration" />
+  </div>
+
+  <!-- Right form -->
+  <div class="login-form-container">
+
+    <!-- Sign In Form -->
+    <div id="sign-in-wrapper" style="{% if not show_login %}display:none;{% endif %}">
+      <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Enter your username and password to access your account</p>
+      </div>
+
+      <form id="login-form" action="{{ authenticator_login_url|safe }}" method="post">
+        <input type="hidden" name="_xsrf" value="{{ xsrf }}">
+        {% if login_error %}<div class="login_error">{{ login_error }}</div>{% endif %}
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+        <input type="submit" class="btn-submit" value="Sign In">
         {% if enable_signup %}
-          <a href="{{ base_url }}signup" class="create-account">Create an account</a>
+        <div class="signup-link">
+          Don't have an account? <a href="#" id="toggle-signup">Sign Up</a>
+        </div>
         {% endif %}
-      </div>
-
-      <div id="login-container" class="login-container">
-        <div class="login-form-container">
-          <div class="login-header">
-            <h1>Welcome back</h1>
-            <p>Enter your account details.</p>
-          </div>
-
-          {% if login_service %}
-            <div class="service-login-container">
-              <a role="button" class='btn-service' href='{{ authenticator_login_url | safe }}'>
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon">
-                Log in with {{ login_service }}
-              </a>
-            </div>
-          {% endif %}
-
-          {% if not login_service %}
-            <form action="{{ authenticator_login_url | safe }}" method="post" role="form">
-              <input type="hidden" name="_xsrf" value="{{ xsrf }}" />
-              <p id='insecure-login-warning' class='hidden alert alert-warning'>
-                Warning: JupyterHub is served over an unsecured connection.
-              </p>
-              {% if login_error %}<p class="login_error alert">{{ login_error }}</p>{% endif %}
-              <div class="form-group">
-                {% block username_input %}
-                  <label for="username_input">Email or username</label>
-                  <input id="username_input" {% block username_input_attrs %} type="text" class="form-control" name="username" value="{{ username }}" placeholder="Enter your username" autocapitalize="off" autocorrect="off" autocomplete="username" autofocus="autofocus" {% endblock username_input_attrs %} />
-                {% endblock username_input %}
-              </div>
-              <div class="form-group">
-                {% block password_input %}
-                  <label for='password_input'>Password</label>
-                  <input id="password_input" {% block password_input_attrs %} type="password" class="form-control" name="password" placeholder="Enter your password" autocomplete="current-password" {% endblock password_input_attrs %} />
-                {% endblock password_input %}
-              </div>
-              <div class="form-options">
-                <div class="remember-me">
-                   <input type="checkbox" id="keep_signed_in">
-                   <label for="keep_signed_in">Keep me signed in</label>
-                </div>
-                <a href="#" class="forgot-password">Forgot password</a>
-              </div>
-              <div class="feedback-container">
-                <input id="login_submit" type="submit" class='btn-submit' value='Sign in' />
-              </div>
-            </form>
-          {% endif %}
-
-          <div class="trouble-link">
-            <a href="#">Trouble signing in?</a>
-          </div>
-
-        </div>
-      </div>
-
-      <aside class="login-art">
-        <div class="carousel">
-          <img src="https://www.cuchd.in/international/assets/img/campus-life-img-18.jpg" class="carousel-image active">
-          <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhiCPPwOV5kBXWFBhyphenhyphenopK6uAX3lkZJ9NzbMqAASRMYyl5nDq6FWvUENLJ5ziK6pxULJLw1SwZQuc4Vpm5ebypSCnPrrIv9XE6SqiYiOUVyNO_scEzyx75ejHIYWREYToEisGBI4hM15dRMwNw-FAV8MbVbWE5tzzydvyT2F_yoZrXBiGfXfVBG0vhiGK7HX/s2048/473570750_1018415176989416_9024031616680920871_n.jpg" class="carousel-image">
-          <img src="https://careermantra.org/front_assets/images/Chandigarh_University1.jpg" class="carousel-image">
-        </div>
-      </aside>
-
+      </form>
     </div>
-  {% endblock login %}
+
+    <!-- Sign Up Form -->
+    <div id="sign-up-wrapper" style="{% if not show_signup %}display:none;{% endif %}">
+      <div class="login-header">
+        <h1>Create Account</h1>
+        <p>Fill in your details to get started</p>
+      </div>
+
+      <form id="signup-form" action="signup" method="post" onsubmit="return submitSignupForm(event)">
+        <input type="hidden" name="_xsrf" value="{{ xsrf }}">
+        {% if alert %}<div class="login_error">{{ result_message }}</div>{% endif %}
+
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" value="{{username}}" required>
+        </div>
+        {% if ask_email %}
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-control" value="{{email}}" required>
+        </div>
+        {% endif %}
+        <div class="form-group">
+          <label>Password</label>
+          <div style="display:flex;gap:6px;">
+            <input type="password" id="password_input" name="signup_password" class="form-control">
+            <button id="eye" type="button" style="border:0;background:none;font-size:18px;cursor:pointer;">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="password_confirmation_input" name="signup_password_confirmation" class="form-control">
+        </div>
+        {% if two_factor_auth %}
+        <div class="form-group">
+          <input type="checkbox" name="2fa"> Enable Two-Factor Authentication
+        </div>
+        {% endif %}
+        {% if tos %}
+        <div class="form-group">
+          <input type="checkbox" id="tos_check"> {{ tos|safe }}
+        </div>
+        {% endif %}
+        {% if recaptcha_key %}
+        <div class="form-group">
+          <div class="g-recaptcha" data-sitekey="{{ recaptcha_key }}"></div>
+        </div>
+        {% endif %}
+        <input type="submit" class="btn-submit" value="Create Account" {% if tos %}disabled{% endif %}>
+        <div class="signup-link">
+          Already have an account? <a href="#" id="toggle-login">Sign In</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
 {% endblock main %}
 
 {% block script %}
-  {{ super() }}
-  <script>
-    if (!window.isSecureContext) {
-      var warning = document.getElementById('insecure-login-warning');
-      if(warning) warning.className = warning.className.replace(/\bhidden\b/, '');
-    }
-    
-    var form = document.querySelector('form');
-    if (form) {
-      form.addEventListener('submit', function(e) {
-        var submitButton = form.querySelector('#login_submit');
-        if (submitButton) {
-          submitButton.setAttribute('disabled', true);
-          submitButton.value = 'Signing in...';
-        }
-      });
-    }
+<script>
+document.addEventListener('DOMContentLoaded', function() {
 
-    // Carousel script
-    const images = document.querySelectorAll('.carousel-image');
-    let currentIndex = 0;
-    function showNextImage() {
-      images[currentIndex].classList.remove('active');
-      currentIndex = (currentIndex + 1) % images.length;
-      images[currentIndex].classList.add('active');
-    }
-    setInterval(showNextImage, 4000); // Change every 4 seconds
-  </script>
+  // Password toggle
+  const eyeBtn = document.getElementById('eye');
+  if(eyeBtn){
+    eyeBtn.addEventListener('click', function(){
+      const pwd = document.getElementById('password_input');
+      const pwdc = document.getElementById('password_confirmation_input');
+      if(pwd.type==='password'){
+        pwd.type='text'; pwdc.type='text'; eyeBtn.textContent='🔑';
+      } else { pwd.type='password'; pwdc.type='password'; eyeBtn.textContent='👁'; }
+    });
+  }
+
+  // Flip animation toggle
+  const container = document.querySelector(".login-container-overlay");
+  const signInWrapper = document.getElementById("sign-in-wrapper");
+  const signUpWrapper = document.getElementById("sign-up-wrapper");
+
+  document.getElementById("toggle-signup")?.addEventListener("click", e => {
+    e.preventDefault();
+    container.classList.add("flipped");
+    signInWrapper.style.display = "none";
+    signUpWrapper.style.display = "block";
+  });
+
+  document.getElementById("toggle-login")?.addEventListener("click", e => {
+    e.preventDefault();
+    container.classList.remove("flipped");
+    signUpWrapper.style.display = "none";
+    signInWrapper.style.display = "block";
+  });
+
+  {% if tos %}
+  const tosCheck = document.getElementById('tos_check');
+  if(tosCheck){
+    tosCheck.addEventListener('click', function(){
+      document.querySelector('#signup-form .btn-submit').disabled = !tosCheck.checked;
+    });
+  }
+  {% endif %}
+});
+</script>
+{% if recaptcha_key %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
 {% endblock script %}
